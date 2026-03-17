@@ -1,20 +1,37 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 书法对比工具 (Calligraphy Comparison Tool)
 
-# Run and deploy your AI Studio app
+这是一个用于对比不同书法作品的工具，支持自动对齐和重叠对比。
 
-This contains everything you need to run your app locally.
+## 解决中国网络访问问题 (Fixing China Connectivity Issues)
 
-View your app in AI Studio: https://ai.studio/apps/64c651bb-5269-4bd9-a2ed-93c4e828a4e1
+由于 Google Gemini API 在中国境内无法直接访问，本项目已配置了后端代理：
 
-## Run Locally
+1.  **本地开发**：运行 `npm run dev`。它会启动一个 Express 服务器，通过 `/api/gemini-proxy` 代理所有 API 请求。
+2.  **Netlify 部署**：
+    *   项目已包含 `netlify/functions/gemini-proxy.ts` 和 `netlify.toml`。
+    *   在 Netlify 部署时，所有发往 `/api/gemini-proxy/*` 的请求都会自动转发到 Netlify Functions 处理。
+    *   **必须设置环境变量**：在 Netlify 的 Site Settings -> Environment variables 中添加 `GEMINI_API_KEY`。
 
-**Prerequisites:**  Node.js
+## 开发指南
 
+### 安装依赖
+```bash
+npm install
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### 启动开发服务器
+```bash
+npm run dev
+```
+
+### 构建生产版本
+```bash
+npm run build
+```
+
+## 部署到 Netlify
+
+1. 将代码推送到 GitHub。
+2. 在 Netlify 中关联此仓库。
+3. 设置构建命令为 `npm run build`，发布目录为 `dist`。
+4. 添加环境变量 `GEMINI_API_KEY`。
