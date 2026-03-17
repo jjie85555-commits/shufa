@@ -25,17 +25,10 @@ export default function App() {
         identifyAnchors(img2, "image/png")
       ]);
 
-      if (anchors1.length === 0 || anchors2.length === 0) {
-        alert("未能识别出足够的锚点，请尝试使用更清晰的书法图片。");
-        setIsProcessing(false);
-        return;
-      }
+      console.log("Anchors Image 1:", anchors1);
+      console.log("Anchors Image 2:", anchors2);
 
-      // Use the first anchor for alignment
-      const a1 = anchors1[0];
-      const a2 = anchors2[0];
-
-      // 2. Load images to get dimensions
+      // 2. Load images
       const loadImage = (src: string): Promise<HTMLImageElement> => {
         return new Promise((resolve) => {
           const img = new Image();
@@ -52,43 +45,46 @@ export default function App() {
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      // Set canvas size to match the first image
       canvas.width = htmlImg1.width;
       canvas.height = htmlImg1.height;
-
-      // Clear
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw Image 1 (Base)
+      // Draw Base Image
       ctx.drawImage(htmlImg1, 0, 0);
 
-      // Calculate transformation for Image 2
-      // Anchor coordinates are normalized 0-1000
-      const x1 = (a1.x / 1000) * htmlImg1.width;
-      const y1 = (a1.y / 1000) * htmlImg1.height;
-      const w1 = (a1.width / 1000) * htmlImg1.width;
+      // 4. Calculate Transformation using Bounding Boxes
+      const getBox = (data: any, img: HTMLImageElement) => {
+        // Fallback if AI fails
+        const box = (data && typeof data === 'object' && !Array.isArray(data)) ? data : { ymin: 200, xmin: 200, ymax: 800, xmax: 800 };
+        return {
+          left: (box.xmin / 1000) * img.width,
+          top: (box.ymin / 1000) * img.height,
+          width: ((box.xmax - box.xmin) / 1000) * img.width,
+          height: ((box.ymax - box.ymin) / 1000) * img.height,
+          centerX: ((box.xmin + box.xmax) / 2000) * img.width,
+          centerY: ((box.ymin + box.ymax) / 2000) * img.height
+        };
+      };
 
-      const x2 = (a2.x / 1000) * htmlImg2.width;
-      const y2 = (a2.y / 1000) * htmlImg2.height;
-      const w2 = (a2.width / 1000) * htmlImg2.width;
+      const box1 = getBox(anchors1, htmlImg1);
+      const box2 = getBox(anchors2, htmlImg2);
 
-      // Scaling factor based on anchor width
-      const scale = w1 / w2;
+      // Simple uniform scaling based on the larger dimension to keep aspect ratio
+      const scale = Math.max(box1.width, box1.height) / Math.max(box2.width, box2.height);
 
-      // Translation to align centers
-      const tx = x1 - (x2 * scale);
-      const ty = y1 - (y2 * scale);
-
-      // Draw Image 2 with transformation
+      // 5. Apply Transformation
       ctx.save();
       ctx.globalAlpha = opacity;
       ctx.globalCompositeOperation = blendMode;
-      ctx.translate(tx, ty);
+
+      // Center-to-center alignment
+      ctx.translate(box1.centerX, box1.centerY);
       ctx.scale(scale, scale);
+      ctx.translate(-box2.centerX, -box2.centerY);
+
       ctx.drawImage(htmlImg2, 0, 0);
       ctx.restore();
 
-      // Set result
       setResult(canvas.toDataURL('image/png'));
     } catch (error) {
       console.error("Processing failed:", error);
