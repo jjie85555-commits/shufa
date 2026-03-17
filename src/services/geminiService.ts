@@ -1,6 +1,19 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+// Override global fetch to proxy Gemini requests through our server
+// This helps bypass regional blocks (e.g. in China)
+if (typeof window !== 'undefined') {
+  const originalFetch = window.fetch;
+  window.fetch = (input, init) => {
+    if (typeof input === 'string' && input.includes('generativelanguage.googleapis.com')) {
+      const proxyUrl = input.replace('https://generativelanguage.googleapis.com', '/api/gemini-proxy');
+      return originalFetch(proxyUrl, init);
+    }
+    return originalFetch(input, init);
+  };
+}
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "PROXY_MODE" });
 
 export interface AnchorPoint {
   x: number;
