@@ -1,0 +1,5 @@
+{
+  "name": "教师书法修正",
+  "description": "An AI-powered tool to align and overlap two calligraphy images by identifying text anchor points.",
+  "requestFramePermissions": []
+}
